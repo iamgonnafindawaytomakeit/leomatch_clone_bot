@@ -38,7 +38,7 @@ STATES = ['start', 'profile_maker_age', 'profile_maker_sex',
           'profile_maker_preffered_sex', 'profile_maker_city', 'profile_maker_name',
           'profile_maker_description', 'profile_maker_photo_video', 'profile_maker_show_result',
           'search_loop', 'write_to_user', 'sleep_mode',
-          'my_profile', 'delete_profile_ask']
+          'my_profile', 'delete_profile_ask', 'delete_profile']
 
 # --------------- #
 # ALLOWED ANSWERS #
@@ -52,7 +52,8 @@ STATE_SEARCH_LOOP_ALLOWED_ANSWERS = ['❤️', '💌', '👎', '💤']
 STATE_WRITE_TO_USER_ALLOWED_ANSWERS = ['Вернуться назад']
 STATE_SLEEP_MODE_ALLOWED_ANSWERS = ['1', '2', '3']
 STATE_MY_PROFILE_ALLOWED_ANSWERS = ['1 🚀', '2']
-STATE_DELETE_PROFILE_ALLOWED_ANSWERS = ['😴 Удалить анкету', '[DEV] Удалить анкету и отключить бота [DEV]' '← Назад']
+STATE_DELETE_PROFILE_ALLOWED_ANSWERS = ['😴 Удалить анкету', '[DEV] Удалить анкету и отключить бота [DEV]', '← Назад']
+STATE_POST_DELETION_ALLOWED_ANSWERS = ['Старт']
 
 # -------------------- #
 # USER'S PROFILE CLASS #
@@ -87,7 +88,7 @@ def bot_create_reply_keyboard(options_list):
         if (options_list == STATE_DELETE_PROFILE_ALLOWED_ANSWERS):
             if (option == STATE_DELETE_PROFILE_ALLOWED_ANSWERS[1]):
                 if (BOT_DEVELOPER):
-                    keyboard.add(KeyboardButton(option))
+                    pass
                 else:
                     continue
         keyboard.add(KeyboardButton(option))
@@ -284,12 +285,21 @@ def messages_handler(msg):
             if (msg.text in STATE_DELETE_PROFILE_ALLOWED_ANSWERS):
                 match msg.text:
                     case '😴 Удалить анкету':
+                        current_state = STATES[14]
                         delete_profile(msg)
                     case '[DEV] Удалить анкету и отключить бота [DEV]' if BOT_DEVELOPER:
                         delete_profile_and_disable_bot(msg)
                     case '← Назад':
                         current_state = STATES[12]
                         my_profile(msg)
+            else:
+                bot_wrong_answer(msg)
+                
+        case 'delete_profile':
+            if (msg.text in STATE_POST_DELETION_ALLOWED_ANSWERS):
+                match msg.text:
+                    case 'Старт':
+                        cmd_start(msg)
             else:
                 bot_wrong_answer(msg)
 
@@ -374,7 +384,8 @@ def delete_profile_ask(msg):
                      reply_markup=bot_create_reply_keyboard(STATE_DELETE_PROFILE_ALLOWED_ANSWERS))
     
 def delete_profile(msg):
-    BOT.send_message(msg.chat.id, 'Надеюсь, ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно — пиши, обязательно найдем тебе кого-нибудь!')
+    BOT.send_message(msg.chat.id, 'Надеюсь, ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно — пиши, обязательно найдем тебе кого-нибудь!',
+                     reply_markup=bot_create_reply_keyboard(STATE_POST_DELETION_ALLOWED_ANSWERS))
     
 def delete_profile_and_disable_bot(msg):
     BOT.send_message(msg.chat.id, 'Анкета удалена. Бот будет выключен в течение 10 секунд.')
