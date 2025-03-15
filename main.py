@@ -27,6 +27,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 BOT_TOKEN = '<place-your-bot-token-here>'
 BOT = TeleBot(BOT_TOKEN)
+BOT_DEVELOPER = False
 
 # ------ #
 # STATES #
@@ -51,7 +52,7 @@ STATE_SEARCH_LOOP_ALLOWED_ANSWERS = ['❤️', '💌', '👎', '💤']
 STATE_WRITE_TO_USER_ALLOWED_ANSWERS = ['Вернуться назад']
 STATE_SLEEP_MODE_ALLOWED_ANSWERS = ['1', '2', '3']
 STATE_MY_PROFILE_ALLOWED_ANSWERS = ['1 🚀', '2']
-STATE_DELETE_PROFILE_ALLOWED_ANSWERS = ['😴 Удалить анкету', '← Назад']
+STATE_DELETE_PROFILE_ALLOWED_ANSWERS = ['😴 Удалить анкету', '[DEV] Удалить анкету и отключить бота [DEV]' '← Назад']
 
 # -------------------- #
 # USER'S PROFILE CLASS #
@@ -278,6 +279,8 @@ def messages_handler(msg):
                 match msg.text:
                     case '😴 Удалить анкету':
                         delete_profile(msg)
+                    case '[DEV] Удалить анкету и отключить бота [DEV]' if BOT_DEVELOPER:
+                        delete_profile_and_disable_bot(msg)
                     case '← Назад':
                         current_state = STATES[12]
                         my_profile(msg)
@@ -366,6 +369,9 @@ def delete_profile_ask(msg):
     
 def delete_profile(msg):
     BOT.send_message(msg.chat.id, 'Надеюсь, ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно — пиши, обязательно найдем тебе кого-нибудь!')
+    
+def delete_profile_and_disable_bot(msg):
+    BOT.send_message(msg.chat.id, 'Анкета удалена. Бот будет выключен в течение 10 секунд.')
     BOT.stop_bot()
 
 # --------------------------------------------------------------------------- #
