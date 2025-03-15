@@ -168,9 +168,9 @@ def messages_handler(msg):
             if (msg.text in STATE_PREFFERED_SEX_ALLOWED_ANSWERS):
                 match msg.text:
                     case 'Девушки':
-                        main_user.preffered_sex = 'females'
+                        main_user.preffered_sex = 'female'
                     case 'Парни':
-                        main_user.preffered_sex = 'males'
+                        main_user.preffered_sex = 'male'
                     case 'Все равно':
                         main_user.preffered_sex = 'everyone'
                 current_state = STATES[4]
@@ -349,9 +349,12 @@ def search_loop(msg):
     global profile
     global temp_profile
     
-    while (profile == temp_profile):
-        profile = random.choice(fake_users)
+    profile = random.choice(fake_users)
     
+    while (profile == temp_profile) or \
+          ((main_user.preffered_sex != profile.sex) and (main_user.preffered_sex != 'everyone')):
+        profile = random.choice(fake_users)
+        
     temp_profile = profile
     
     if (profile.photo_video == ''):
@@ -398,15 +401,15 @@ def delete_profile_and_disable_bot(msg):
 if (__name__ == '__main__'):
     main_user = BotUser
     
-    fake_user_1 = BotUser('18', 'male', 'females',
+    fake_user_1 = BotUser('18', 'male', 'female',
                           'Москва', 'Модный чел', 'чисто девчонку чтоб завалиться в клуб побухать аее))',
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/1.jpg')
     
-    fake_user_2 = BotUser('23', 'female', 'males',
+    fake_user_2 = BotUser('23', 'female', 'male',
                           'Москва', 'Девушка мечты', 'Учусь в Литературном институте, интересуюсь вышиванием и танцами. Хочу сходить на свидание с милым парнем ^^',
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/2.jpg')
     
-    fake_user_3 = BotUser('44', 'female', 'males',
+    fake_user_3 = BotUser('44', 'female', 'male',
                           'Москва', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/3.jpg')
     
