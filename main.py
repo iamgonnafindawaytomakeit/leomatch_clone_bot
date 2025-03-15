@@ -85,12 +85,12 @@ temp_profile = None
 def bot_create_reply_keyboard(options_list):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     for option in options_list:
-        if (options_list == STATE_DELETE_PROFILE_ALLOWED_ANSWERS) and
-           (option == STATE_DELETE_PROFILE_ALLOWED_ANSWERS[1]) and
-           (BOT_DEVELOPER):
-            pass
-        else:
-            continue
+        if (options_list == STATE_DELETE_PROFILE_ALLOWED_ANSWERS):
+            if (option == STATE_DELETE_PROFILE_ALLOWED_ANSWERS[1]):
+                if (BOT_DEVELOPER):
+                    pass
+                else:
+                    continue
         keyboard.add(KeyboardButton(option))
     return keyboard
     
