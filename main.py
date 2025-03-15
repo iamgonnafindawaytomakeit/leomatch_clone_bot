@@ -47,6 +47,7 @@ STATES = ['start', 'profile_maker_age', 'profile_maker_sex',
 STATE_START_ALLOWED_ANSWERS = ['👍']
 STATE_SEX_ALLOWED_ANSWERS = ['Я — парень', 'Я — девушка']
 STATE_PREFFERED_SEX_ALLOWED_ANSWERS = ['Девушки', 'Парни', 'Все равно']
+STATE_PHOTO_VIDEO_ALLOWED_ANSWERS = ['Продолжить без фото']
 STATE_PROFILE_MAKER_SHOW_RESULTS_ALLOWED_ANSWERS = ['Да', 'Изменить анкету']
 STATE_SEARCH_LOOP_ALLOWED_ANSWERS = ['❤️', '💌', '👎', '💤']
 STATE_WRITE_TO_USER_ALLOWED_ANSWERS = ['Вернуться назад']
@@ -60,9 +61,9 @@ STATE_POST_DELETION_ALLOWED_ANSWERS = ['Старт']
 # -------------------- #
 
 class BotUser:
-    def __init__(self, age, sex,
-                 preffered_sex, city, name,
-                 description, photo_video):
+    def __init__(self, age=None, sex=None,
+                 preffered_sex=None, city=None, name=None,
+                 description=None, photo_video=None):
         self.age = age
         self.sex = sex
         self.preffered_sex = preffered_sex
@@ -204,7 +205,13 @@ def messages_handler(msg):
             
         case 'profile_maker_photo_video':
             if (not msg.content_type == 'photo'):
-                BOT.send_message(msg.chat.id, 'Не удалось загрузить фото либо оно не было добавлено. Попробуй еще раз.')
+                if (msg.text in STATE_PHOTO_VIDEO_ALLOWED_ANSWERS):
+                    match msg.text:
+                        case 'Продолжить без фото':
+                            current_state = STATES[8]
+                            profile_maker_show_result(msg)
+                else:
+                    BOT.send_message(msg.chat.id, 'Не удалось загрузить фото. Попробуй еще раз.')
             else:
                 main_user.photo_video = msg
                 current_state = STATES[8]
@@ -332,12 +339,17 @@ def profile_maker_description(msg):
     BOT.send_message(msg.chat.id, 'Расскажи о себе и кого хочешь найти, чем предлагаешь заняться. Это поможет лучше подобрать тебе компанию.')
     
 def profile_maker_photo_video(msg):
-    BOT.send_message(msg.chat.id, 'Теперь пришли фото 👍 — его будут видеть другие пользователи.')
+    BOT.send_message(msg.chat.id, 'Теперь пришли фото 👍 — его будут видеть другие пользователи.',
+                     reply_markup=bot_create_reply_keyboard(STATE_PHOTO_VIDEO_ALLOWED_ANSWERS))
     
 def profile_maker_show_result(msg):
     BOT.send_message(msg.chat.id, 'Так выглядит твоя анкета:')
-    BOT.send_photo(msg.chat.id, main_user.photo_video.photo[-1].file_id,
-                   '{0}, {1}, {2}\n\n{3}'.format(main_user.name, main_user.age, main_user.city, main_user.description))
+    if (not main_user.photo_video is None):
+        BOT.send_photo(msg.chat.id, main_user.photo_video.photo[-1].file_id,
+                       '{0}, {1}, {2}\n\n{3}'.format(main_user.name, main_user.age, main_user.city, main_user.description))
+    else:
+        BOT.send_message(msg.chat.id,
+                         '{0}, {1}, {2}\n\n{3}'.format(main_user.name, main_user.age, main_user.city, main_user.description))
     BOT.send_message(msg.chat.id, 'Все верно?',
                      reply_markup=bot_create_reply_keyboard(STATE_PROFILE_MAKER_SHOW_RESULTS_ALLOWED_ANSWERS))
 
@@ -357,7 +369,7 @@ def search_loop(msg):
         
     temp_profile = profile
     
-    if (profile.photo_video == ''):
+    if (profile.photo_video is None):
         BOT.send_message(msg.chat.id,
                          '{0}, {1}, {2}\n\n{3}'.format(profile.name, profile.age, profile.city, profile.description),
                          reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
@@ -377,8 +389,12 @@ def sleep_mode(msg):
 
 def my_profile(msg):
     BOT.send_message(msg.chat.id, 'Так выглядит твоя анкета:')
-    BOT.send_photo(msg.chat.id, main_user.photo_video.photo[-1].file_id,
-                   '{0}, {1}, {2}\n\n{3}'.format(main_user.name, main_user.age, main_user.city, main_user.description))
+    if (not main_user.photo_video is None):
+        BOT.send_photo(msg.chat.id, main_user.photo_video.photo[-1].file_id,
+                       '{0}, {1}, {2}\n\n{3}'.format(main_user.name, main_user.age, main_user.city, main_user.description))
+    else:
+        BOT.send_message(msg.chat.id,
+                         '{0}, {1}, {2}\n\n{3}'.format(main_user.name, main_user.age, main_user.city, main_user.description))
     BOT.send_message(msg.chat.id, '1. Смотреть анкеты.\n2. Заполнить анкету заново.',
                      reply_markup=bot_create_reply_keyboard(STATE_MY_PROFILE_ALLOWED_ANSWERS))
     
@@ -399,7 +415,7 @@ def delete_profile_and_disable_bot(msg):
 # --------------------------------------------------------------------------- #
 
 if (__name__ == '__main__'):
-    main_user = BotUser
+    main_user = BotUser()
     
     fake_user_1 = BotUser('18', 'male', 'female',
                           'Москва', 'Модный чел', 'чисто девчонку чтоб завалиться в клуб побухать аее))',
