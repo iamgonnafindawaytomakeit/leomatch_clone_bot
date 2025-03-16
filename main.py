@@ -74,6 +74,7 @@ class BotUser:
 
 local_profiles = []
 main_profiles_list = []
+filtered_profiles = []
 seen_profiles = []
 
 # --------------------------------------------------------------------------- #
@@ -349,6 +350,7 @@ def profile_maker_show_result(msg):
 def search_loop(msg):
     global local_profiles
     global main_profiles_list
+    global filtered_profiles
     global seen_profiles
     
     profile_to_show = None
@@ -364,12 +366,17 @@ def search_loop(msg):
         else:
             BOT.send_message(msg.chat.id,
                              'К сожалению, я не нашел пользователей из твоего города :(\nНо я могу показать тебе всех остальных!')
-            main_profiles_list = fake_profiles 
-            
-    if (set(main_profiles_list).issubset(seen_profiles)):
+            main_profiles_list = fake_profiles
+    
+    if (not filtered_profiles):
+        for profile in main_profiles_list:
+            if (profile.sex == main_user.preffered_sex) or (main_user.preffered_sex == 'everyone'):
+                filtered_profiles.append(profile)
+    
+    if (set(filtered_profiles).issubset(seen_profiles)):
         seen_profiles.clear()
     
-    for profile in main_profiles_list:
+    for profile in filtered_profiles:
         if (not profile in seen_profiles):
             if (profile.sex == main_user.preffered_sex) or (main_user.preffered_sex == 'everyone'):
                 seen_profiles.append(profile)
