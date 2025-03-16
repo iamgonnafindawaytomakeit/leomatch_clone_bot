@@ -1,7 +1,7 @@
 # --------------------------- #
 #      Written by KIRYA       #
 #   Created on: 14.03.2025    #
-# Last updated on: 16.03.2025 #
+# Last updated on: 17.03.2025 #
 # --------------------------- #
 
 # --------------------------------------------------------------------------- #
@@ -73,7 +73,7 @@ class BotUser:
 # ------ #
 
 local_profiles = []
-profiles_list = None
+main_profiles_list = []
 seen_profiles = []
 
 # --------------------------------------------------------------------------- #
@@ -348,40 +348,42 @@ def profile_maker_show_result(msg):
 
 def search_loop(msg):
     global local_profiles
+    global main_profiles_list
     global seen_profiles
-    global profiles_list
+    
+    profile_to_show = None
     
     if (not local_profiles):
-        for usr in fake_users:
-            if (usr.city == main_user.city):
-                local_profiles.append(usr)
+        for profile in fake_profiles:
+            if (profile.city == main_user.city):
+                local_profiles.append(profile)
     
-    if (profiles_list is None):
+    if (not main_profiles_list):
         if (local_profiles):
-            profiles_list = local_profiles
+            main_profiles_list = local_profiles
         else:
-            profiles_list = fake_users
-            BOT.send_message(msg.chat.id, 'Мне не удалось найти пользователей из твоего города :(\nПосмотри, кто есть в других!')
-    
-    for usr in profiles_list:
-        if (seen_profiles == profiles_list):
-            seen_profiles = []
-        if (usr in seen_profiles):
-            continue
-        if (main_user.preffered_sex != usr.sex) and (main_user.preffered_sex != 'everyone'):
-            continue
-        if (usr.photo_video is None):
-            seen_profiles.append(usr)
             BOT.send_message(msg.chat.id,
-                             '{0}, {1}, {2}\n\n{3}'.format(usr.name, usr.age, usr.city, usr.description),
-                             reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
-            break
-        else:
-            seen_profiles.append(usr)
-            BOT.send_photo(msg.chat.id, usr.photo_video,
-                           '{0}, {1}, {2}\n\n{3}'.format(usr.name, usr.age, usr.city, usr.description),
-                           reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
-            break
+                             'К сожалению, я не нашел пользователей из твоего города :(\nНо я могу показать тебе всех остальных!')
+            main_profiles_list = fake_profiles 
+            
+    if (set(main_profiles_list).issubset(seen_profiles)):
+        seen_profiles.clear()
+    
+    for profile in main_profiles_list:
+        if (not profile in seen_profiles):
+            if (profile.sex == main_user.preffered_sex) or (main_user.preffered_sex == 'everyone'):
+                seen_profiles.append(profile)
+                profile_to_show = profile
+                break
+    
+    if (profile_to_show.photo_video is None):
+        BOT.send_message(msg.chat.id,
+                         '{0}, {1}, {2}\n\n{3}'.format(profile_to_show.name, profile_to_show.age, profile_to_show.city, profile_to_show.description),
+                         reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
+    else:
+        BOT.send_photo(msg.chat.id, profile_to_show.photo_video,
+                       '{0}, {1}, {2}\n\n{3}'.format(profile_to_show.name, profile_to_show.age, profile_to_show.city, profile_to_show.description),
+                       reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
     
 def write_to_user(msg):
     BOT.send_message(msg.chat.id, 'Напиши сообщение для этого пользователя:',
@@ -418,29 +420,29 @@ def delete_profile(msg):
 if (__name__ == '__main__'):
     main_user = BotUser()
     
-    fake_user_1 = BotUser('18', 'male', 'female',
-                          'Москва', 'Модный чел', 'чисто девчонку чтоб завалиться в клуб побухать аее))',
-                          'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/1.jpg')
+    fake_profile_1 = BotUser('18', 'male', 'female',
+                             'Москва', 'Модный чел', 'чисто девчонку чтоб завалиться в клуб побухать аее))',
+                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/1.jpg')
     
-    fake_user_2 = BotUser('23', 'female', 'male',
-                          'Москва', 'Девушка мечты', 'Учусь в Литературном институте, интересуюсь вышиванием и танцами. Хочу сходить на свидание с милым парнем ^^',
-                          'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/2.jpg')
+    fake_profile_2 = BotUser('23', 'female', 'male',
+                             'Москва', 'Девушка мечты', 'Учусь в Литературном институте, интересуюсь вышиванием и танцами. Хочу сходить на свидание с милым парнем ^^',
+                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/2.jpg')
     
-    fake_user_3 = BotUser('44', 'female', 'male',
-                          'Ижевск', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
-                          'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/3.jpg')
+    fake_profile_3 = BotUser('44', 'female', 'male',
+                             'Ижевск', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
+                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/3.jpg')
     
-    fake_user_4 = BotUser('53', 'male', 'everyone',
-                          'Москва', 'Владимир Ульянов', 'Товарищи! Не верьте всему тому, что пишут в интернете!',
-                          'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/4.jpg')
+    fake_profile_4 = BotUser('53', 'male', 'everyone',
+                             'Москва', 'Владимир Ульянов', 'Товарищи! Не верьте всему тому, что пишут в интернете!',
+                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/4.jpg')
     
-    fake_user_5 = BotUser('32', 'female', 'everyone',
-                          'Сочи', 'Катя', 'Хотелось бы найти друзей, с которыми можно будет ходить гулять по нашему чудесному городу)\n\nP. S. Отношения не интересуют, так как есть молодой человек.',
-                          'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/5.jpg')
+    fake_profile_5 = BotUser('32', 'female', 'everyone',
+                             'Сочи', 'Катя', 'Хотелось бы найти друзей, с которыми можно будет ходить гулять по нашему чудесному городу)\n\nP. S. Отношения не интересуют, так как есть молодой человек.',
+                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/5.jpg')
     
-    fake_users = [
-        fake_user_1, fake_user_2, fake_user_3,
-        fake_user_4, fake_user_5
+    fake_profiles = [
+        fake_profile_1, fake_profile_2, fake_profile_3,
+        fake_profile_4, fake_profile_5
         ]
     
     BOT.infinity_polling()
