@@ -1,14 +1,8 @@
 # --------------------------- #
 #      Written by KIRYA       #
 #   Created on: 14.03.2025    #
-# Last updated on: 15.03.2025 #
+# Last updated on: 16.03.2025 #
 # --------------------------- #
-
-# --------------------------------------------------------------------------- #
-# STANDARD LIBRARIES                                                          #
-# --------------------------------------------------------------------------- #
-
-import random
 
 # --------------------------------------------------------------------------- #
 # EXTERNAL LIBRARIES                                                          #
@@ -27,18 +21,19 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 BOT_TOKEN = '<place-your-bot-token-here>'
 BOT = TeleBot(BOT_TOKEN)
-BOT_DEVELOPER = False
 
 # ------ #
 # STATES #
 # ------ #
 
 current_state = None
-STATES = ['start', 'profile_maker_age', 'profile_maker_sex',
-          'profile_maker_preffered_sex', 'profile_maker_city', 'profile_maker_name',
-          'profile_maker_description', 'profile_maker_photo_video', 'profile_maker_show_result',
-          'search_loop', 'write_to_user', 'sleep_mode',
-          'my_profile', 'delete_profile_ask', 'delete_profile']
+STATES = [
+    'start', 'profile_maker_age', 'profile_maker_sex',
+    'profile_maker_preffered_sex', 'profile_maker_city', 'profile_maker_name',
+    'profile_maker_description', 'profile_maker_photo_video', 'profile_maker_show_result',
+     'search_loop', 'write_to_user', 'sleep_mode',
+    'my_profile', 'delete_profile_ask', 'delete_profile'
+    ]
 
 # --------------- #
 # ALLOWED ANSWERS #
@@ -53,17 +48,18 @@ STATE_SEARCH_LOOP_ALLOWED_ANSWERS = ['❤️', '💌', '👎', '💤']
 STATE_WRITE_TO_USER_ALLOWED_ANSWERS = ['Вернуться назад']
 STATE_SLEEP_MODE_ALLOWED_ANSWERS = ['1', '2', '3']
 STATE_MY_PROFILE_ALLOWED_ANSWERS = ['1 🚀', '2']
-STATE_DELETE_PROFILE_ALLOWED_ANSWERS = ['😴 Удалить анкету', '[DEV] Удалить анкету и отключить бота [DEV]', '← Назад']
-STATE_POST_DELETION_ALLOWED_ANSWERS = ['Старт']
+STATE_DELETE_PROFILE_ALLOWED_ANSWERS = ['😴 Удалить анкету', '← Назад']
+STATE_POST_DELETION_ALLOWED_ANSWERS = ['СТАРТ']
 
 # -------------------- #
 # USER'S PROFILE CLASS #
 # -------------------- #
 
 class BotUser:
-    def __init__(self, age=None, sex=None,
-                 preffered_sex=None, city=None, name=None,
-                 description=None, photo_video=None):
+    def __init__(
+            self, age=None, sex=None,
+            preffered_sex=None, city=None, name=None,
+            description=None, photo_video=None):
         self.age = age
         self.sex = sex
         self.preffered_sex = preffered_sex
@@ -76,8 +72,9 @@ class BotUser:
 # SEARCH #
 # ------ #
 
-profile = None
-temp_profile = None
+local_profiles = []
+profiles_list = None
+seen_profiles = []
 
 # --------------------------------------------------------------------------- #
 # SYSTEM FUNCTIONS                                                            #
@@ -85,14 +82,8 @@ temp_profile = None
 
 def bot_create_reply_keyboard(options_list):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    for option in options_list:
-        if (options_list == STATE_DELETE_PROFILE_ALLOWED_ANSWERS):
-            if (option == STATE_DELETE_PROFILE_ALLOWED_ANSWERS[1]):
-                if (BOT_DEVELOPER):
-                    pass
-                else:
-                    continue
-        keyboard.add(KeyboardButton(option))
+    buttons = [KeyboardButton(option) for option in options_list]
+    keyboard.add(*buttons)
     return keyboard
     
 def bot_wrong_answer(msg):
@@ -294,8 +285,6 @@ def messages_handler(msg):
                     case '😴 Удалить анкету':
                         current_state = STATES[14]
                         delete_profile(msg)
-                    case '[DEV] Удалить анкету и отключить бота [DEV]' if BOT_DEVELOPER:
-                        delete_profile_and_disable_bot(msg)
                     case '← Назад':
                         current_state = STATES[12]
                         my_profile(msg)
@@ -305,7 +294,7 @@ def messages_handler(msg):
         case 'delete_profile':
             if (msg.text in STATE_POST_DELETION_ALLOWED_ANSWERS):
                 match msg.text:
-                    case 'Старт':
+                    case 'СТАРТ':
                         cmd_start(msg)
             else:
                 bot_wrong_answer(msg)
@@ -358,25 +347,41 @@ def profile_maker_show_result(msg):
 # ------ #
 
 def search_loop(msg):
-    global profile
-    global temp_profile
+    global local_profiles
+    global seen_profiles
+    global profiles_list
     
-    profile = random.choice(fake_users)
+    if (not local_profiles):
+        for usr in fake_users:
+            if (usr.city == main_user.city):
+                local_profiles.append(usr)
     
-    while (profile == temp_profile) or \
-          ((main_user.preffered_sex != profile.sex) and (main_user.preffered_sex != 'everyone')):
-        profile = random.choice(fake_users)
-        
-    temp_profile = profile
+    if (profiles_list is None):
+        if (local_profiles):
+            profiles_list = local_profiles
+        else:
+            profiles_list = fake_users
+            BOT.send_message(msg.chat.id, 'Мне не удалось найти пользователей из твоего города :(\nПосмотри, кто есть в других!')
     
-    if (profile.photo_video is None):
-        BOT.send_message(msg.chat.id,
-                         '{0}, {1}, {2}\n\n{3}'.format(profile.name, profile.age, profile.city, profile.description),
-                         reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
-    else:
-        BOT.send_photo(msg.chat.id, profile.photo_video,
-                       '{0}, {1}, {2}\n\n{3}'.format(profile.name, profile.age, profile.city, profile.description),
-                       reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
+    for usr in profiles_list:
+        if (seen_profiles == profiles_list):
+            seen_profiles = []
+        if (usr in seen_profiles):
+            continue
+        if (main_user.preffered_sex != usr.sex) and (main_user.preffered_sex != 'everyone'):
+            continue
+        if (usr.photo_video is None):
+            seen_profiles.append(usr)
+            BOT.send_message(msg.chat.id,
+                             '{0}, {1}, {2}\n\n{3}'.format(usr.name, usr.age, usr.city, usr.description),
+                             reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
+            break
+        else:
+            seen_profiles.append(usr)
+            BOT.send_photo(msg.chat.id, usr.photo_video,
+                           '{0}, {1}, {2}\n\n{3}'.format(usr.name, usr.age, usr.city, usr.description),
+                           reply_markup=bot_create_reply_keyboard(STATE_SEARCH_LOOP_ALLOWED_ANSWERS))
+            break
     
 def write_to_user(msg):
     BOT.send_message(msg.chat.id, 'Напиши сообщение для этого пользователя:',
@@ -405,10 +410,6 @@ def delete_profile_ask(msg):
 def delete_profile(msg):
     BOT.send_message(msg.chat.id, 'Надеюсь, ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно — пиши, обязательно найдем тебе кого-нибудь!',
                      reply_markup=bot_create_reply_keyboard(STATE_POST_DELETION_ALLOWED_ANSWERS))
-    
-def delete_profile_and_disable_bot(msg):
-    BOT.send_message(msg.chat.id, 'Анкета удалена. Бот будет выключен в течение 10 секунд.')
-    BOT.stop_bot()
 
 # --------------------------------------------------------------------------- #
 # ENTRY POINT                                                                 #
@@ -426,7 +427,7 @@ if (__name__ == '__main__'):
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/2.jpg')
     
     fake_user_3 = BotUser('44', 'female', 'male',
-                          'Москва', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
+                          'Ижевск', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/3.jpg')
     
     fake_user_4 = BotUser('53', 'male', 'everyone',
@@ -434,10 +435,12 @@ if (__name__ == '__main__'):
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/4.jpg')
     
     fake_user_5 = BotUser('32', 'female', 'everyone',
-                          'Москва', 'Катя', 'Хотелось бы найти друзей, с которыми можно будет ходить гулять по нашему чудесному городу)\n\nP. S. Отношения не интересуют, так как есть молодой человек.',
+                          'Сочи', 'Катя', 'Хотелось бы найти друзей, с которыми можно будет ходить гулять по нашему чудесному городу)\n\nP. S. Отношения не интересуют, так как есть молодой человек.',
                           'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/5.jpg')
     
-    fake_users = [fake_user_1, fake_user_2, fake_user_3,
-                  fake_user_4, fake_user_5]
+    fake_users = [
+        fake_user_1, fake_user_2, fake_user_3,
+        fake_user_4, fake_user_5
+        ]
     
     BOT.infinity_polling()
