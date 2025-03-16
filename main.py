@@ -88,7 +88,10 @@ def bot_create_reply_keyboard(options_list):
     return keyboard
     
 def bot_wrong_answer(msg):
-    BOT.send_message(msg.chat.id, 'Нет такого варианта ответа.')
+    BOT.send_message(msg.chat.id, 'Нет такого варианта ответа. Пожалуйста, попробуй еще раз.')
+    
+def bot_wrong_input(msg):
+    BOT.send_message(msg.chat.id, 'Некорректный ввод. Пожалуйста, попробуй еще раз.')
 
 # --------------------------------------------------------------------------- #
 # COMMANDS                                                                    #
@@ -138,12 +141,15 @@ def messages_handler(msg):
                 bot_wrong_answer(msg)
                         
         case 'profile_maker_age':
-            if (not msg.text.isdigit()):
-                BOT.send_message(msg.chat.id, 'Укажи правильный возраст. Только цифры.')
+            if (msg.content_type == 'text'):
+                if (not msg.text.isdigit()):
+                    BOT.send_message(msg.chat.id, 'Укажи правильный возраст. Только цифры.')
+                else:
+                    main_user.age = msg.text
+                    current_state = STATES[2]
+                    profile_maker_sex(msg)
             else:
-                main_user.age = msg.text
-                current_state = STATES[2]
-                profile_maker_sex(msg)
+                bot_wrong_input(msg)
             
         case 'profile_maker_sex':
             if (msg.text in STATE_SEX_ALLOWED_ANSWERS):
@@ -172,28 +178,37 @@ def messages_handler(msg):
                 bot_wrong_answer(msg)
             
         case 'profile_maker_city':
-            if (not msg.text.isalpha()):
-                BOT.send_message(msg.chat.id, 'Укажи правильное название города. Только буквы.')
+            if (msg.content_type == 'text'):
+                if (not msg.text.isalpha()):
+                    BOT.send_message(msg.chat.id, 'Укажи правильное название города. Только буквы.')
+                else:
+                    main_user.city = msg.text
+                    current_state = STATES[5]
+                    profile_maker_name(msg)
             else:
-                main_user.city = msg.text
-                current_state = STATES[5]
-                profile_maker_name(msg)
+                bot_wrong_input(msg)
             
         case 'profile_maker_name':
-            if (not msg.text.isalpha()):
-                BOT.send_message(msg.chat.id, 'Укажи правильное имя. Только буквы.')
+            if (msg.content_type == 'text'):
+                if (not msg.text.isalpha()):
+                    BOT.send_message(msg.chat.id, 'Укажи правильное имя. Только буквы.')
+                else:
+                    main_user.name = msg.text
+                    current_state = STATES[6]
+                    profile_maker_description(msg)
             else:
-                main_user.name = msg.text
-                current_state = STATES[6]
-                profile_maker_description(msg)
+                bot_wrong_input(msg)
             
         case 'profile_maker_description':
-            if (len(msg.text) > 900):
-                BOT.send_message(msg.chat.id, 'Слишком длинное описание. Лимит — 900 знаков (включая пробелы).')
+            if (msg.content_type == 'text'):
+                if (len(msg.text) > 900):
+                    BOT.send_message(msg.chat.id, 'Слишком длинное описание. Лимит — 900 знаков (включая пробелы).')
+                else:
+                    main_user.description = msg.text
+                    current_state = STATES[7]
+                    profile_maker_photo_video(msg)
             else:
-                main_user.description = msg.text
-                current_state = STATES[7]
-                profile_maker_photo_video(msg)
+                bot_wrong_input(msg)
             
         case 'profile_maker_photo_video':
             if (not msg.content_type == 'photo'):
@@ -238,20 +253,22 @@ def messages_handler(msg):
                 bot_wrong_answer(msg)
                         
         case 'write_to_user':
-            if (msg.text in STATE_WRITE_TO_USER_ALLOWED_ANSWERS):
-                match msg.text:
-                    case 'Вернуться назад':
+            if (msg.content_type == 'text'):
+                if (msg.text in STATE_WRITE_TO_USER_ALLOWED_ANSWERS):
+                    match msg.text:
+                        case 'Вернуться назад':
+                            current_state = STATES[9]
+                            search_loop(msg)
+                else:
+                    if (len(msg.text) > 900):
+                        BOT.send_message(msg.chat.id,
+                                         'Слишком длинное описание. Лимит — 900 знаков (включая пробелы).')
+                    else:
+                        BOT.send_message(msg.chat.id, 'Лайк отправлен, ждем ответа.')
                         current_state = STATES[9]
                         search_loop(msg)
             else:
-                if (len(msg.text) > 900):
-                    BOT.send_message(msg.chat.id, 'Слишком длинное описание. Лимит — 900 знаков (включая пробелы).')
-                elif (len(msg.text) == 0):
-                    BOT.send_message(msg.chat.id, 'Сообщение не может быть пустым.')
-                else:
-                    BOT.send_message(msg.chat.id, 'Лайк отправлен, ждем ответа.')
-                    current_state = STATES[9]
-                    search_loop(msg)
+                bot_wrong_input(msg)
             
         case 'sleep_mode':
             if (msg.text in STATE_SLEEP_MODE_ALLOWED_ANSWERS):
@@ -309,6 +326,26 @@ def messages_handler(msg):
 # ------------- #
 
 def profile_maker_age(msg):
+    global local_profiles
+    global main_profiles_list
+    global filtered_profiles
+    global seen_profiles
+    
+    if (not main_user.photo_video is None):
+        main_user.photo_video = None
+    
+    if (local_profiles):
+        local_profiles.clear()
+        
+    if (main_profiles_list):
+        main_profiles_list.clear()
+        
+    if (filtered_profiles):
+        filtered_profiles.clear()
+        
+    if (seen_profiles):
+        seen_profiles.clear()
+    
     BOT.send_message(msg.chat.id, 'Сколько тебе лет?')
     
 def profile_maker_sex(msg):
