@@ -378,10 +378,9 @@ def search_loop(msg):
     
     for profile in filtered_profiles:
         if (not profile in seen_profiles):
-            if (profile.sex == main_user.preffered_sex) or (main_user.preffered_sex == 'everyone'):
-                seen_profiles.append(profile)
-                profile_to_show = profile
-                break
+            seen_profiles.append(profile)
+            profile_to_show = profile
+            break
     
     if (profile_to_show.photo_video is None):
         BOT.send_message(msg.chat.id,
