@@ -77,6 +77,37 @@ main_profiles_list = []
 filtered_profiles = []
 seen_profiles = []
 
+# ------------- #
+# FAKE DATABASE #
+# ------------- #
+
+main_user = None
+
+fake_profile_1 = BotUser('18', 'male', 'female',
+                         'Москва', 'Модный чел', 'чисто девчонку чтоб завалиться в клуб побухать аее))',
+                         'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/1.jpg')
+    
+fake_profile_2 = BotUser('23', 'female', 'male',
+                         'Москва', 'Девушка мечты', 'Учусь в Литературном институте, интересуюсь вышиванием и танцами. Хочу сходить на свидание с милым парнем ^^',
+                         'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/2.jpg')
+    
+fake_profile_3 = BotUser('44', 'female', 'male',
+                         'Ижевск', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
+                         'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/3.jpg')
+    
+fake_profile_4 = BotUser('53', 'male', 'everyone',
+                         'Москва', 'Владимир Ульянов', 'Товарищи! Не верьте всему тому, что пишут в интернете!',
+                         'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/4.jpg')
+
+fake_profile_5 = BotUser('32', 'female', 'everyone',
+                         'Сочи', 'Катя', 'Хотелось бы найти друзей, с которыми можно будет ходить гулять по нашему чудесному городу)\n\nP. S. Отношения не интересуют, так как есть молодой человек.',
+                         'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/5.jpg')
+
+fake_profiles = [
+    fake_profile_1, fake_profile_2, fake_profile_3,
+    fake_profile_4, fake_profile_5
+    ]
+
 # --------------------------------------------------------------------------- #
 # SYSTEM FUNCTIONS                                                            #
 # --------------------------------------------------------------------------- #
@@ -136,7 +167,7 @@ def messages_handler(msg):
                 match msg.text:
                     case '👍':
                         current_state = STATES[1]
-                        profile_maker_age(msg)
+                        profile_maker_init(msg)
             else:
                 bot_wrong_answer(msg)
                         
@@ -232,7 +263,7 @@ def messages_handler(msg):
                         search_loop(msg)
                     case 'Изменить анкету':
                         current_state = STATES[1]
-                        profile_maker_age(msg)
+                        profile_maker_init(msg)
             else:
                 bot_wrong_answer(msg)
                         
@@ -293,7 +324,7 @@ def messages_handler(msg):
                         search_loop(msg)
                     case '2':
                         current_state = STATES[1]
-                        profile_maker_age(msg)
+                        profile_maker_init(msg)
             else:
                 bot_wrong_answer(msg)
             
@@ -325,27 +356,30 @@ def messages_handler(msg):
 # PROFILE MAKER #
 # ------------- #
 
-def profile_maker_age(msg):
+def profile_maker_init(msg):
+    global main_user
     global local_profiles
     global main_profiles_list
     global filtered_profiles
     global seen_profiles
     
-    if (not main_user.photo_video is None):
-        main_user.photo_video = None
+    main_user = BotUser()
     
     if (local_profiles):
-        local_profiles.clear()
+        local_profiles = []
         
     if (main_profiles_list):
-        main_profiles_list.clear()
+        main_profiles_list = []
         
     if (filtered_profiles):
-        filtered_profiles.clear()
+        filtered_profiles = []
         
     if (seen_profiles):
-        seen_profiles.clear()
-    
+        seen_profiles = []
+        
+    profile_maker_age(msg)
+
+def profile_maker_age(msg):    
     BOT.send_message(msg.chat.id, 'Сколько тебе лет?')
     
 def profile_maker_sex(msg):
@@ -411,7 +445,7 @@ def search_loop(msg):
                 filtered_profiles.append(profile)
     
     if (set(filtered_profiles).issubset(seen_profiles)):
-        seen_profiles.clear()
+        seen_profiles = []
     
     for profile in filtered_profiles:
         if (not profile in seen_profiles):
@@ -461,31 +495,4 @@ def delete_profile(msg):
 # --------------------------------------------------------------------------- #
 
 if (__name__ == '__main__'):
-    main_user = BotUser()
-    
-    fake_profile_1 = BotUser('18', 'male', 'female',
-                             'Москва', 'Модный чел', 'чисто девчонку чтоб завалиться в клуб побухать аее))',
-                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/1.jpg')
-    
-    fake_profile_2 = BotUser('23', 'female', 'male',
-                             'Москва', 'Девушка мечты', 'Учусь в Литературном институте, интересуюсь вышиванием и танцами. Хочу сходить на свидание с милым парнем ^^',
-                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/2.jpg')
-    
-    fake_profile_3 = BotUser('44', 'female', 'male',
-                             'Ижевск', 'Лидия', 'Ищу верного, надежного мужчину для построения семьи! Есть ребенок!',
-                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/3.jpg')
-    
-    fake_profile_4 = BotUser('53', 'male', 'everyone',
-                             'Москва', 'Владимир Ульянов', 'Товарищи! Не верьте всему тому, что пишут в интернете!',
-                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/4.jpg')
-    
-    fake_profile_5 = BotUser('32', 'female', 'everyone',
-                             'Сочи', 'Катя', 'Хотелось бы найти друзей, с которыми можно будет ходить гулять по нашему чудесному городу)\n\nP. S. Отношения не интересуют, так как есть молодой человек.',
-                             'https://raw.githubusercontent.com/iamgonnafindawaytomakeit/leomatch_clone_bot/refs/heads/main/fake_users/5.jpg')
-    
-    fake_profiles = [
-        fake_profile_1, fake_profile_2, fake_profile_3,
-        fake_profile_4, fake_profile_5
-        ]
-    
     BOT.infinity_polling()
