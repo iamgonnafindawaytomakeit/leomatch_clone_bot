@@ -456,7 +456,7 @@ def search_loop(msg):
     
     profile_to_show = None
     
-    if ((not local_suitable_profiles) or (not nonlocal_suitable_profiles)):
+    if ((not local_suitable_profiles) and (not nonlocal_suitable_profiles)):
         for profile in fake_profiles:
             if ((profile.sex == main_user.preffered_sex)
                     or (main_user.preffered_sex == 'everyone')):
