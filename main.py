@@ -461,8 +461,12 @@ def search_loop(msg):
             if ((profile.sex == main_user.preffered_sex)
                     or (main_user.preffered_sex == 'everyone')):
                 if (profile.city == main_user.city):
+                    if (main_profiles_list):
+                        main_profiles_list = []
                     local_suitable_profiles.append(profile)
                 else:
+                    if (main_profiles_list):
+                        main_profiles_list = []
                     nonlocal_suitable_profiles.append(profile)
                     
     if (not main_profiles_list):
