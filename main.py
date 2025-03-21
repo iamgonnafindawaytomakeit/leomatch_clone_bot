@@ -1,7 +1,7 @@
 # --------------------------- #
 #      Written by KIRYA       #
 #   Created on: 14.03.2025    #
-# Last updated on: 21.03.2025 #
+# Last updated on: 22.03.2025 #
 # --------------------------- #
 
 # --------------------------------------------------------------------------- #
@@ -73,9 +73,9 @@ class BotUser:
 # SEARCH #
 # ------ #
 
-local_profiles = []
+local_suitable_profiles = []
+nonlocal_suitable_profiles = []
 main_profiles_list = []
-filtered_profiles = []
 seen_profiles = []
 
 # ------------- #
@@ -252,7 +252,7 @@ def messages_handler(msg):
                 case 'text':
                     if (msg.text in STATE_PHOTO_VIDEO_ALLOWED_ANSWERS):
                         match msg.text:
-                            case 'Продолжить без фото':
+                            case 'Продолжить без фото/видео':
                                 current_state = STATES[8]
                                 profile_maker_show_result(msg)
                     else:
@@ -376,21 +376,21 @@ def messages_handler(msg):
 
 def profile_maker_init(msg):
     global main_user
-    global local_profiles
+    global local_suitable_profiles
+    global nonlocal_suitable_profiles
     global main_profiles_list
-    global filtered_profiles
     global seen_profiles
     
     main_user = BotUser()
     
-    if (local_profiles):
-        local_profiles = []
+    if (local_suitable_profiles):
+        local_suitable_profiles = []
+        
+    if (nonlocal_suitable_profiles):
+        nonlocal_suitable_profiles = []
         
     if (main_profiles_list):
         main_profiles_list = []
-        
-    if (filtered_profiles):
-        filtered_profiles = []
         
     if (seen_profiles):
         seen_profiles = []
@@ -449,44 +449,38 @@ def profile_maker_show_result(msg):
 # ------ #
 
 def search_loop(msg):
-    global local_profiles
+    global local_suitable_profiles
+    global nonlocal_suitable_profiles
     global main_profiles_list
-    global filtered_profiles
     global seen_profiles
     
     profile_to_show = None
     
-    if (not local_profiles):
+    if ((not local_suitable_profiles) or (not nonlocal_suitable_profiles)):
         for profile in fake_profiles:
-            if (profile.city == main_user.city):
-                local_profiles.append(profile)
-    
-    if (not main_profiles_list):
-        if (local_profiles):
-            main_profiles_list = local_profiles
-        else:
-            BOT.send_message(msg.chat.id,
-                             'К сожалению, я не нашел пользователей из твоего города :(\nНо я могу показать тебе всю базу профилей!')
-            main_profiles_list = fake_profiles
-            
-    if ((main_profiles_list == local_profiles)
-            and (set(local_profiles).issubset(seen_profiles))):
-        BOT.send_message(msg.chat.id,
-                         'Пользователи из твоего города закончились! Но я могу показать тебе всю базу профилей!')
-        main_profiles_list = fake_profiles
-        filtered_profiles = []
-        seen_profiles = []
-    
-    if (not filtered_profiles):
-        for profile in main_profiles_list:
             if ((profile.sex == main_user.preffered_sex)
                     or (main_user.preffered_sex == 'everyone')):
-                filtered_profiles.append(profile)
-    
-    if (set(filtered_profiles).issubset(seen_profiles)):
+                if (profile.city == main_user.city):
+                    local_suitable_profiles.append(profile)
+                else:
+                    nonlocal_suitable_profiles.append(profile)
+                    
+    if (not main_profiles_list):
+        if (local_suitable_profiles):
+            main_profiles_list = local_suitable_profiles
+        elif (nonlocal_suitable_profiles):
+            BOT.send_message(msg.chat.id,
+                             'Я не смог найти пользователей, соответствующих твоим требованиям, в твоем городе :(\nПопробую поискать в других местах...')
+            main_profiles_list = nonlocal_suitable_profiles
+        else:
+            BOT.send_message(msg.chat.id,
+                             'Я не смог найти пользователей, соответствующих твоим требованиям :(\nНо я могу показать все имеющиеся в базе профили!')
+            main_profiles_list = fake_profiles
+            
+    if (set(main_profiles_list).issubset(seen_profiles)):
         seen_profiles = []
     
-    for profile in filtered_profiles:
+    for profile in main_profiles_list:
         if (not profile in seen_profiles):
             seen_profiles.append(profile)
             profile_to_show = profile
